@@ -1,5 +1,4 @@
 // References
-const angleInput = document.getElementById("angleInput");
 const colorsContainer = document.getElementById("colorsContainer");
 const addColorBtn = document.getElementById("addColorBtn");
 const removeColorBtn = document.getElementById("removeColorBtn");
@@ -7,20 +6,25 @@ const gradientPreview = document.getElementById("gradientPreview");
 const cssOutput = document.getElementById("cssOutput");
 const copyButton = document.getElementById("copyButton");
 
-// Radio buttons for gradient type
-// We get them all, and whichever is checked will define the type
-const radios = document.querySelectorAll('input[name="gradientType"]');
+// Toggle input for Linear (unchecked) vs Radial (checked)
+const gradientToggle = document.getElementById("gradientToggle");
 
 // Initial color inputs
 const color0 = document.getElementById("color0");
 const color1 = document.getElementById("color1");
 
-// Attach listeners to the *initial* color inputs
+// Attach event listeners so they update live
 color0.addEventListener("input", generateGradient);
 color1.addEventListener("input", generateGradient);
 
-// Keep track of how many color inputs exist
-let colorCount = 2;
+// Horizontal angle slider elements
+const angleSlider = document.getElementById("angleSlider");
+const sliderHandle = document.getElementById("sliderHandle");
+const angleLabel = document.getElementById("angleLabel");
+
+// We'll store the angle in degrees [0..360]
+let currentAngle = 0;
+let colorCount = 2; // how many color inputs exist
 
 /**
  * Collect all color values from the container
@@ -31,21 +35,20 @@ function getColors() {
 }
 
 /**
- * Get the current gradient type from the radio buttons (linear or radial)
+ * Determine whether we should use linear or radial
+ * Toggle checked => radial, otherwise => linear
  */
 function getGradientType() {
-  const selectedRadio = document.querySelector(
-    'input[name="gradientType"]:checked'
-  );
-  return selectedRadio ? selectedRadio.value : "linear";
+  return gradientToggle.checked ? "radial" : "linear";
 }
 
 /**
  * Generate the gradient and update the preview + output
  */
 function generateGradient() {
-  const gradientType = getGradientType(); // "linear" or "radial"
-  const angle = angleInput.value;
+  const gradientType = getGradientType();
+  // use our slider angle
+  const angle = currentAngle;
   const colors = getColors();
 
   // If only one color, just show a solid background
@@ -55,7 +58,7 @@ function generateGradient() {
     return;
   }
 
-  // Distribute stops evenly from 0% ... 100%
+  // Distribute stops evenly from 0% to 100%
   const step = 100 / (colors.length - 1);
   const gradientStops = colors.map((color, index) => {
     const position = Math.round(step * index);
@@ -65,13 +68,11 @@ function generateGradient() {
   let gradientString = "";
 
   if (gradientType === "linear") {
-    // e.g., linear-gradient(90deg, #ff0000 0%, #0000ff 100%)
     gradientString = `linear-gradient(${angle}deg, ${gradientStops.join(
       ", "
     )})`;
   } else {
-    // e.g., radial-gradient(circle, #ff0000 0%, #0000ff 100%)
-    // We ignore angle for radial
+    // Radial ignores the angle
     gradientString = `radial-gradient(circle, ${gradientStops.join(", ")})`;
   }
 
@@ -114,7 +115,6 @@ addColorBtn.addEventListener("click", () => {
  * Remove the last color input
  */
 removeColorBtn.addEventListener("click", () => {
-  // Avoid going below 1 color
   if (colorCount > 1) {
     colorsContainer.removeChild(colorsContainer.lastElementChild);
     colorCount--;
@@ -127,7 +127,7 @@ removeColorBtn.addEventListener("click", () => {
  */
 copyButton.addEventListener("click", () => {
   const cssToCopy = cssOutput.value;
-  if (cssToCopy.trim() === "") return; // nothing to copy
+  if (cssToCopy.trim() === "") return;
 
   navigator.clipboard
     .writeText(cssToCopy)
@@ -139,13 +139,59 @@ copyButton.addEventListener("click", () => {
     });
 });
 
-// Listen for changes on BOTH radio buttons
-radios.forEach((radio) => {
-  radio.addEventListener("change", generateGradient);
+/* 
+  HORIZONTAL ANGLE SLIDER DRAG LOGIC 
+  - The slider is ~200px wide.
+  - 0 => angle 0°, 200 => angle 360° 
+*/
+let isDragging = false;
+
+angleSlider.addEventListener("mousedown", (e) => {
+  isDragging = true;
+  updateSlider(e);
 });
 
-// Angle changes
-angleInput.addEventListener("input", generateGradient);
+document.addEventListener("mouseup", () => {
+  isDragging = false;
+});
 
-// Initialize the gradient on page load
-window.addEventListener("DOMContentLoaded", generateGradient);
+document.addEventListener("mousemove", (e) => {
+  if (isDragging) {
+    updateSlider(e);
+  }
+});
+
+function updateSlider(e) {
+  const rect = angleSlider.getBoundingClientRect();
+  const sliderWidth = rect.width;
+  let offsetX = e.clientX - rect.left;
+
+  // clamp offsetX to [0, sliderWidth]
+  if (offsetX < 0) offsetX = 0;
+  if (offsetX > sliderWidth) offsetX = sliderWidth;
+
+  // Convert offsetX -> angle
+  const newAngle = Math.round((offsetX / sliderWidth) * 360);
+  currentAngle = newAngle;
+
+  // Move the handle
+  const handleX = offsetX - 8;
+  sliderHandle.style.left = `${handleX}px`;
+
+  // Update the label
+  angleLabel.textContent = `${currentAngle}°`;
+
+  // Re-generate the gradient
+  generateGradient();
+}
+
+// Listen for changes on the toggle
+gradientToggle.addEventListener("change", generateGradient);
+
+// On page load, initialize everything
+window.addEventListener("DOMContentLoaded", () => {
+  currentAngle = 0;
+  sliderHandle.style.left = `-8px`;
+  angleLabel.textContent = `${currentAngle}°`;
+  generateGradient();
+});
