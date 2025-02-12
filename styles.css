@@ -17,12 +17,12 @@
     justify-content: center;
     min-height: 100vh;
     background: linear-gradient(90deg, #000000 0%, #0000ff 50%, #000000 100%);
-    font-size: 18px; /* Larger base font size */
+    font-size: 2rem; /* Larger base font size */
   }
   
   .app-container {
     width: 60%;
-    background: #ffffff;
+    background: #948181;
     padding: 2rem;
     border-radius: 8px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
