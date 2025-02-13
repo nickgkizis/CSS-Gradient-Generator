@@ -1,119 +1,117 @@
-// References
+// Select DOM elements
 const colorsContainer = document.getElementById("colorsContainer");
 const addColorBtn = document.getElementById("addColorBtn");
 const removeColorBtn = document.getElementById("removeColorBtn");
-const gradientPreview = document.getElementById("gradientPreview");
+const resetButton = document.getElementById("resetButton");
 const cssOutput = document.getElementById("cssOutput");
 const copyButton = document.getElementById("copyButton");
 
-// Toggle input for Linear (unchecked) vs Radial (checked)
+// Gradient type toggle
 const gradientToggle = document.getElementById("gradientToggle");
+
+// Animation toggle and duration input
+const animateToggle = document.getElementById("animateToggle");
+const durationInput = document.getElementById("durationInput");
 
 // Initial color inputs
 const color0 = document.getElementById("color0");
 const color1 = document.getElementById("color1");
+const color2 = document.getElementById("color2");
 
-// Attach event listeners so they update live
-color0.addEventListener("input", generateGradient);
-color1.addEventListener("input", generateGradient);
+// Update gradient when color inputs change
+[color0, color1, color2].forEach((input) => {
+  input.addEventListener("input", generateGradient);
+});
+
+// Update gradient when toggles change
+gradientToggle.addEventListener("change", generateGradient);
+animateToggle.addEventListener("change", generateGradient);
+durationInput.addEventListener("input", generateGradient);
 
 // Horizontal angle slider elements
 const angleSlider = document.getElementById("angleSlider");
 const sliderHandle = document.getElementById("sliderHandle");
 const angleLabel = document.getElementById("angleLabel");
 
-// We'll store the angle in degrees [0..360]
-let currentAngle = 0;
-let colorCount = 2; // how many color inputs exist
+// Current angle in degrees and color count
+let currentAngle = 90; // Start at 90 degrees
+let colorCount = 3;
 
-/**
- * Collect all color values from the container
- */
+// Retrieve current colors from inputs
 function getColors() {
-  const colorInputs = colorsContainer.querySelectorAll('input[type="color"]');
-  return Array.from(colorInputs).map((input) => input.value);
+  const inputs = colorsContainer.querySelectorAll('input[type="color"]');
+  return Array.from(inputs).map((input) => input.value);
 }
 
-/**
- * Determine whether we should use linear or radial
- * Toggle checked => radial, otherwise => linear
- */
+// Get current gradient type (linear or radial)
 function getGradientType() {
   return gradientToggle.checked ? "radial" : "linear";
 }
 
-/**
- * Generate the gradient and update the preview + output
- */
+// Generate the gradient, apply animation if enabled, and update the CSS output
 function generateGradient() {
   const gradientType = getGradientType();
-  // use our slider angle
-  const angle = currentAngle;
   const colors = getColors();
 
-  // If only one color, just show a solid background
+  // If only one color, show a solid background
   if (colors.length === 1) {
-    gradientPreview.style.background = colors[0];
+    document.body.style.background = colors[0];
     cssOutput.value = `background: ${colors[0]};`;
     return;
   }
 
-  // Distribute stops evenly from 0% to 100%
   const step = 100 / (colors.length - 1);
-  const gradientStops = colors.map((color, index) => {
-    const position = Math.round(step * index);
-    return `${color} ${position}%`;
-  });
-
+  const stops = colors.map(
+    (color, index) => `${color} ${Math.round(step * index)}%`
+  );
   let gradientString = "";
 
   if (gradientType === "linear") {
-    gradientString = `linear-gradient(${angle}deg, ${gradientStops.join(
-      ", "
-    )})`;
+    gradientString = `linear-gradient(${currentAngle}deg, ${stops.join(", ")})`;
   } else {
-    // Radial ignores the angle
-    gradientString = `radial-gradient(circle, ${gradientStops.join(", ")})`;
+    gradientString = `radial-gradient(circle, ${stops.join(", ")})`;
   }
 
-  // Apply to preview
-  gradientPreview.style.background = gradientString;
-  // Display CSS
-  cssOutput.value = `background: ${gradientString};`;
+  // Apply the gradient to the body background
+  document.body.style.background = gradientString;
+
+  // If animation is enabled, use the user-specified duration
+  let animationCSS = "";
+  if (animateToggle.checked) {
+    const duration = parseFloat(durationInput.value) || 5;
+    document.body.style.backgroundSize = "150% 150%";
+    document.body.style.animation = `animateGradient ${duration}s ease-in-out infinite alternate`;
+    animationCSS = `\nanimation: animateGradient ${duration}s ease-in-out infinite alternate;\nbackground-size: 150% 150%;`;
+  } else {
+    document.body.style.backgroundSize = "auto";
+    document.body.style.animation = "none";
+  }
+
+  // Update the generated CSS output
+  cssOutput.value = `background: ${gradientString};${animationCSS}`;
 }
 
-/**
- * Add a new color input dynamically
- */
+// Add a new color input dynamically
 addColorBtn.addEventListener("click", () => {
   const newIndex = colorCount;
   colorCount++;
-
-  // Create a new color picker
   const colorGroup = document.createElement("div");
   colorGroup.className = "color-group";
-
   const label = document.createElement("label");
   label.textContent = `Color ${newIndex + 1}:`;
   label.htmlFor = `color${newIndex}`;
-
-  const colorInput = document.createElement("input");
-  colorInput.type = "color";
-  colorInput.id = `color${newIndex}`;
-  colorInput.value = "#000000"; // default color
-  colorInput.addEventListener("input", generateGradient);
-
-  // Append to DOM
+  const input = document.createElement("input");
+  input.type = "color";
+  input.id = `color${newIndex}`;
+  input.value = "#000000"; // Default color
+  input.addEventListener("input", generateGradient);
   colorGroup.appendChild(label);
-  colorGroup.appendChild(colorInput);
+  colorGroup.appendChild(input);
   colorsContainer.appendChild(colorGroup);
-
   generateGradient();
 });
 
-/**
- * Remove the last color input
- */
+// Remove the last color input if more than one exists
 removeColorBtn.addEventListener("click", () => {
   if (colorCount > 1) {
     colorsContainer.removeChild(colorsContainer.lastElementChild);
@@ -122,76 +120,144 @@ removeColorBtn.addEventListener("click", () => {
   }
 });
 
-/**
- * Copy the generated CSS to clipboard
- */
-copyButton.addEventListener("click", () => {
-  const cssToCopy = cssOutput.value;
-  if (cssToCopy.trim() === "") return;
-
-  navigator.clipboard
-    .writeText(cssToCopy)
-    .then(() => {
-      alert("Copied to clipboard!");
-    })
-    .catch((err) => {
-      alert("Failed to copy text: " + err);
-    });
+// Reset settings to defaults
+resetButton.addEventListener("click", () => {
+  currentAngle = 90; // Start at 90 degrees
+  sliderHandle.style.left = "calc(90% - 136px)"; // Set slider position to 90 degrees
+  angleLabel.textContent = "90°"; // Set label text to 90°
+  gradientToggle.checked = false;
+  animateToggle.checked = false;
+  durationInput.value = "5";
+  document.getElementById("color0").value = "#ff0000";
+  document.getElementById("color1").value = "#0000ff";
+  document.getElementById("color2").value = "#000000";
+  while (colorCount > 3) {
+    colorsContainer.removeChild(colorsContainer.lastElementChild);
+    colorCount--;
+  }
+  generateGradient();
 });
 
-/* 
-  HORIZONTAL ANGLE SLIDER DRAG LOGIC 
-  - The slider is ~200px wide.
-  - 0 => angle 0°, 200 => angle 360° 
-*/
-let isDragging = false;
+// Copy-to-clipboard with a toast notification
+function showToast() {
+  const toast = document.getElementById("copyToast");
+  toast.classList.add("show");
+  setTimeout(() => {
+    toast.classList.remove("show");
+  }, 2000);
+}
 
+copyButton.addEventListener("click", () => {
+  const text = cssOutput.value;
+  if (text.trim() === "") return;
+  navigator.clipboard
+    .writeText(text)
+    .then(showToast)
+    .catch((err) => alert("Failed to copy: " + err));
+});
+
+// Angle slider drag logic
+let isDragging = false;
 angleSlider.addEventListener("mousedown", (e) => {
   isDragging = true;
   updateSlider(e);
 });
-
-document.addEventListener("mouseup", () => {
-  isDragging = false;
-});
-
+document.addEventListener("mouseup", () => (isDragging = false));
 document.addEventListener("mousemove", (e) => {
-  if (isDragging) {
-    updateSlider(e);
-  }
+  if (isDragging) updateSlider(e);
 });
 
 function updateSlider(e) {
   const rect = angleSlider.getBoundingClientRect();
-  const sliderWidth = rect.width;
   let offsetX = e.clientX - rect.left;
-
-  // clamp offsetX to [0, sliderWidth]
   if (offsetX < 0) offsetX = 0;
-  if (offsetX > sliderWidth) offsetX = sliderWidth;
+  if (offsetX > rect.width) offsetX = rect.width;
 
-  // Convert offsetX -> angle
-  const newAngle = Math.round((offsetX / sliderWidth) * 360);
-  currentAngle = newAngle;
+  // Update angle to match slider position
+  currentAngle = Math.round((offsetX / rect.width) * 360);
 
-  // Move the handle
-  const handleX = offsetX - 8;
-  sliderHandle.style.left = `${handleX}px`;
-
-  // Update the label
-  angleLabel.textContent = `${currentAngle}°`;
-
-  // Re-generate the gradient
-  generateGradient();
+  // Adjust handle and angle display
+  sliderHandle.style.left = offsetX - 8 + "px"; // 8px is half the width of the slider handle
+  angleLabel.textContent = `${currentAngle}°`; // Show angle in the label
+  generateGradient(); // Generate new gradient with updated angle
 }
 
-// Listen for changes on the toggle
-gradientToggle.addEventListener("change", generateGradient);
+// Minimize/Restore functionality for the app container
+const minimizeButton = document.getElementById("minimizeButton");
+const minimizerDisclaimer = document.querySelector(".minimizer-disclaimer");
+minimizeButton.addEventListener("click", () => {
+  const appContainer = document.querySelector(".app-container");
+  appContainer.classList.toggle("minimized");
+  if (appContainer.classList.contains("minimized")) {
+    minimizeButton.textContent = "▢";
+    minimizerDisclaimer.textContent = "Maximize";
+  } else {
+    minimizeButton.textContent = "–";
+    minimizerDisclaimer.textContent = "Minimize";
+  }
+});
 
-// On page load, initialize everything
+// Initialize on page load
 window.addEventListener("DOMContentLoaded", () => {
-  currentAngle = 0;
-  sliderHandle.style.left = `-8px`;
-  angleLabel.textContent = `${currentAngle}°`;
+  currentAngle = 90; // Start at 90 degrees
+  sliderHandle.style.left = "calc(90% - 136px)"; // Set slider position to 90 degrees
+  angleLabel.textContent = "90°"; // Set label text to 90°
   generateGradient();
 });
+
+// Select the angle slider wrapper
+const angleSliderWrapper = document.querySelector(".angle-slider-wrapper");
+
+// Update the generateGradient function to show/hide the angle slider based on the gradient type
+function generateGradient() {
+  const gradientType = getGradientType();
+  const colors = getColors();
+
+  // Hide or show the angle slider based on the gradient type
+  if (gradientType === "radial") {
+    angleSliderWrapper.style.display = "none"; // Hide the angle slider when radial is selected
+  } else {
+    angleSliderWrapper.style.display = "block"; // Show the angle slider when linear is selected
+  }
+
+  // If only one color, show a solid background
+  if (colors.length === 1) {
+    document.body.style.background = colors[0];
+    cssOutput.value = `background: ${colors[0]};`;
+    return;
+  }
+
+  const step = 100 / (colors.length - 1);
+  const stops = colors.map(
+    (color, index) => `${color} ${Math.round(step * index)}%`
+  );
+  let gradientString = "";
+
+  if (gradientType === "linear") {
+    gradientString = `linear-gradient(${currentAngle}deg, ${stops.join(", ")})`;
+  } else {
+    gradientString = `radial-gradient(circle, ${stops.join(", ")})`;
+  }
+
+  // Apply the gradient to the body background
+  document.body.style.background = gradientString;
+
+  // If animation is enabled, use the user-specified duration
+  let animationCSS = "";
+  if (animateToggle.checked) {
+    const duration = parseFloat(durationInput.value) || 5;
+    document.body.style.backgroundSize = "150% 150%";
+    document.body.style.animation = `animateGradient ${duration}s ease-in-out infinite alternate`;
+    animationCSS = `\nanimation: animateGradient ${duration}s ease-in-out infinite alternate;\nbackground-size: 150% 150%;`;
+  } else {
+    document.body.style.backgroundSize = "auto";
+    document.body.style.animation = "none";
+  }
+
+  // Update the generated CSS output
+  cssOutput.value = `background: ${gradientString};${animationCSS}`;
+}
+
+// Update gradient when toggles change
+gradientToggle.addEventListener("change", generateGradient);
+

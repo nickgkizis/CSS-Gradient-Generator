@@ -7,65 +7,88 @@
 </head>
 <body>
   <div class="app-container">
-    <h1>CSS Gradient Generator</h1>
-
-    <!-- Modern Toggle for Gradient Type -->
-    <div class="input-group toggle-container">
-      <span class="toggle-label">Gradient Type:</span>
-      <!-- Wrap everything in a label for full toggle clickability -->
-      <span class="toggle-option toggle-option-left">Linear</span>
-      <label class="toggle-switch" for="gradientToggle">
-        <input type="checkbox" id="gradientToggle" />
-        <span class="switch-slider"></span>
-      </label>
-      <!-- The text for each side can be placed outside or inside -->
-      
-      <span class="toggle-option toggle-option-right">Radial</span>
-    </div>
-
-    <!-- Horizontal Angle Slider -->
-    <div class="input-group angle-slider-wrapper">
-      <label>Angle (Linear):</label>
-      <div class="angle-slider" id="angleSlider">
-        <div class="slider-track"></div>
-        <div class="slider-handle" id="sliderHandle"></div>
-      </div>
-      <!-- Display the current angle -->
-      <span id="angleLabel">0°</span>
-    </div>
-
-    <!-- Colors Section (initial two color pickers) -->
-    <div class="colors-container" id="colorsContainer">
-      <div class="color-group">
-        <label for="color0">Color 1:</label>
-        <input type="color" id="color0" value="#ff0000" />
-      </div>
-      <div class="color-group">
-        <label for="color1">Color 2:</label>
-        <input type="color" id="color1" value="#0000ff" />
+    <div class="header">
+      <h1>CSS Gradient Generator</h1>
+      <div class="minimizer-container">
+        <span class="minimizer-disclaimer">Minimize</span>
+        <button id="minimizeButton" class="minimize-button" title="Click to minimize/restore the control panel. Minimizing hides all controls until restored.">–</button>
       </div>
     </div>
+    <div class="content">
+      <!-- Toggle for Gradient Type -->
+      <div class="input-group toggle-container">
+        <span class="toggle-label">Gradient Type:</span>
+        <span class="toggle-option toggle-option-left">Linear</span>
+        <label class="toggle-switch" for="gradientToggle">
+          <input type="checkbox" id="gradientToggle" />
+          <span class="switch-slider"></span>
+        </label>
+        <span class="toggle-option toggle-option-right">Radial</span>
+      </div>
 
-    <!-- Buttons to add/remove color inputs -->
-    <div class="button-group">
-      <button id="addColorBtn">Add Color</button>
-      <button id="removeColorBtn">Remove Color</button>
-    </div>
+      <!-- Animate Toggle -->
+      <div class="input-group animate-container">
+        <span class="animate-label">Animate:</span>
+        <label class="toggle-switch" for="animateToggle">
+          <input type="checkbox" id="animateToggle" />
+          <span class="switch-slider"></span>
+        </label>
+      </div>
 
-    <!-- Preview and Output -->
-    <div class="preview-container">
-      <div id="gradientPreview" class="gradient-preview"></div>
-    </div>
-    <div class="code-container">
-      <label for="cssOutput">Generated CSS:</label>
-      <textarea id="cssOutput" readonly></textarea>
-    </div>
+      <!-- Animation Duration Input -->
+      <div class="input-group duration-container">
+        <label for="durationInput">Duration (seconds):</label>
+        <input type="number" id="durationInput" value="5" min="0.1" step="0.1">
+      </div>
 
-    <!-- Copy Button -->
-    <div class="copy-button-group">
-      <button id="copyButton">Copy to Clipboard</button>
+      <!-- Horizontal Angle Slider -->
+      <div class="input-group angle-slider-wrapper">
+        <label>Angle: <span id="angleLabel">0°</span></label>
+        <div class="angle-slider" id="angleSlider">
+          <div class="slider-track"></div>
+          <div class="slider-handle" id="sliderHandle"></div>
+        </div>
+        
+      </div>
+
+      <!-- Colors Section (initial three color pickers) -->
+      <div class="colors-container" id="colorsContainer">
+        <div class="color-group">
+          <label for="color0">Color 1:</label>
+          <input type="color" id="color0" value="#ff0000" />
+        </div>
+        <div class="color-group">
+          <label for="color1">Color 2:</label>
+          <input type="color" id="color1" value="#0000ff" />
+        </div>
+        <div class="color-group">
+          <label for="color2">Color 3:</label>
+          <input type="color" id="color2" value="#000000" />
+        </div>
+      </div>
+
+      <!-- Buttons to add/remove colors and reset -->
+      <div class="button-group">
+        <button id="addColorBtn">Add Color</button>
+        <button id="removeColorBtn">Remove Color</button>
+        <button id="resetButton">Reset</button>
+      </div>
+
+      <!-- Generated CSS Output -->
+      <div class="code-container">
+        <label for="cssOutput">Generated CSS:</label>
+        <textarea id="cssOutput" readonly></textarea>
+      </div>
+
+      <!-- Copy Button -->
+      <div class="copy-button-group">
+        <button id="copyButton">Copy to Clipboard</button>
+      </div>
     </div>
   </div>
+
+  <!-- Copy Toast Notification -->
+  <div id="copyToast" class="copy-toast">Copied!</div>
 
   <!-- Main JS -->
   <script src="script.js"></script>
