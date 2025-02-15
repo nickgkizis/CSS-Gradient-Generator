@@ -248,7 +248,10 @@ function generateGradient() {
     const duration = parseFloat(durationInput.value) || 5;
     document.body.style.backgroundSize = "150% 150%";
     document.body.style.animation = `animateGradient ${duration}s ease-in-out infinite alternate`;
-    animationCSS = `\nanimation: animateGradient ${duration}s ease-in-out infinite alternate;\nbackground-size: 150% 150%;`;
+    animationCSS = `\nanimation: animateGradient ${duration}s ease-in-out infinite alternate;\nbackground-size: 150% 150%;
+    \n@keyframes animateGradient {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 100% 50%; }`;
   } else {
     document.body.style.backgroundSize = "auto";
     document.body.style.animation = "none";
